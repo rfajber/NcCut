@@ -65,6 +65,8 @@ class FileDisplay(ScatterLayout):
         img: kivy.uix.image.Image UI element which displays the image over the scatter object
         tool: Reference to currently loaded tool
         nc_data: If file is a NetCDF file, actively loaded data array
+        vmin: minnimum value to set data for plotting to
+        vmax: maximum value to set data for plotting to 
         dragging (bool): Whether in dragging mode or not
         editing (bool): Whether in editing mode or not
         t_mode (bool): Whether a tool is currently loaded
@@ -130,6 +132,8 @@ class FileDisplay(ScatterLayout):
         self.img = None
         self.tool = None
         self.nc_data = None
+        self.vmin = None
+        self.vmax = None
 
         self.dragging = False
         self.editing = False
@@ -148,6 +152,12 @@ class FileDisplay(ScatterLayout):
         self.contrast = func.contrast_function(g_config["contrast"])
         self.l_col = g_config["line_color"]
         self.cir_size = g_config["circle_size"]
+
+        # adding vmin and vmax
+        if 'vmin' in list(g_config.keys()):
+            self.vmin=g_config['vmin']
+        if 'vmax' in list(g_config.keys()):
+            self.vmax=g_config['vmax']
 
         self.cmaps = plt.colormaps()[:87]
         self.colormap = g_config["colormap"]
@@ -519,7 +529,19 @@ class FileDisplay(ScatterLayout):
 
         # Turn into image
         with warnings.catch_warnings(record=True) as w:
-            n_data = (self.nc_data - np.nanmin(self.nc_data)) / (np.nanmax(self.nc_data) - np.nanmin(self.nc_data))
+
+            # if vmin and vmax are not set externally, set them here
+            if self.vmin is None:
+                self.vmin = np.nanmin(self.nc_data)
+            if self.vmax is None:
+                self.vmax = np.nanmax(self.nc_data)
+
+            # if vmin and vmax are set, need to make sure that we clip the data
+            n_data = np.clip(
+                (self.nc_data - self.vmin) / (self.vmin- self.vmin),
+                0,
+                1)
+                                                   
             if len(w) > 0 and issubclass(w[-1].category, RuntimeWarning):
                 func.alert_popup("Selected data is all NaN")
         nans = np.repeat(np.isnan(n_data)[:, :, np.newaxis], 4, axis=2)
