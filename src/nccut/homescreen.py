@@ -264,7 +264,8 @@ class HomeScreen(Screen):
         """
         self.display = FileDisplay(home=self, f_config={"netcdf": config},
                                    g_config=self.general_config["graphics_defaults"],
-                                   t_config=self.general_config["tool_defaults"])
+                                   t_config=self.general_config["tool_defaults"],
+                                   cbar_limits_config=self.general_config["cbar_limits"])
         self.ids.view.add_widget(self.display)
         if self.settings_bar.parent is None:
             self.ids.settings_bar.add_widget(self.settings_bar)

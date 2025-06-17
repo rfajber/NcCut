@@ -105,7 +105,7 @@ class FileDisplay(ScatterLayout):
         delete_point_btn: Delete point button
         edit_widgets (list): List of widgets that must be added to screen when entering editing mode
     """
-    def __init__(self, home, f_config, g_config, t_config, **kwargs):
+    def __init__(self, home, f_config, g_config, t_config, cbar_limits_config, **kwargs):
         """
         Initializes settings and defines editing mode buttons.
 
@@ -118,6 +118,7 @@ class FileDisplay(ScatterLayout):
                 :meth:`nccut.netcdfconfig.NetCDFConfig.check_inputs` for structure of dictionary)
             g_config (dict): Dictionary holding initial contrast value, line color, colormap, and circle size
             t_config (dict): Dictionary holding tool configurations: default orthogonal width
+            cbar_limit_config (dict): Dictionary holding tool configurations: default orthogonal width
         """
         super(FileDisplay, self).__init__(**kwargs)
 
@@ -152,12 +153,11 @@ class FileDisplay(ScatterLayout):
         self.contrast = func.contrast_function(g_config["contrast"])
         self.l_col = g_config["line_color"]
         self.cir_size = g_config["circle_size"]
-
+      
         # adding vmin and vmax
-        if 'vmin' in list(g_config.keys()):
-            self.vmin=g_config['vmin']
-        if 'vmax' in list(g_config.keys()):
-            self.vmax=g_config['vmax']
+        
+        self.vmin=cbar_limits_config['vmin']
+        self.vmax=cbar_limits_config['vmax']
 
         self.cmaps = plt.colormaps()[:87]
         self.colormap = g_config["colormap"]
@@ -253,8 +253,16 @@ class FileDisplay(ScatterLayout):
         self.x_axis()
         self.y_axis()
         if self.f_type == "netcdf":
-            self.home.update_colorbar(func.get_color_bar(self.colormap, self.nc_data, (0.1, 0.1, 0.1),
-                                                         "white", font * 2.5))
+
+            
+            self.home.update_colorbar(func.get_color_bar(self.colormap,
+                                                            self.nc_data,
+                                                            (0.1, 0.1, 0.1),
+                                                            "white",
+                                                            self.home.font * 2.5,
+                                                            d_min=self.vmin,
+                                                            d_max=self.vmax))
+
         if self.t_mode:
             self.tool.font_adapt(font)
 
@@ -530,25 +538,34 @@ class FileDisplay(ScatterLayout):
         # Turn into image
         with warnings.catch_warnings(record=True) as w:
 
+            print(self.vmin,self.vmax)
+            
             # if vmin and vmax are not set externally, set them here
             if self.vmin is None:
                 self.vmin = np.nanmin(self.nc_data)
             if self.vmax is None:
                 self.vmax = np.nanmax(self.nc_data)
-
+                                
             # if vmin and vmax are set, need to make sure that we clip the data
             n_data = np.clip(
-                (self.nc_data - self.vmin) / (self.vmin- self.vmin),
-                0,
-                1)
+                a=(self.nc_data - self.vmin) / (self.vmax - self.vmin),
+                a_min=0.0,
+                a_max=1.0)
+
                                                    
             if len(w) > 0 and issubclass(w[-1].category, RuntimeWarning):
                 func.alert_popup("Selected data is all NaN")
         nans = np.repeat(np.isnan(n_data)[:, :, np.newaxis], 4, axis=2)
         c_mapped = plt.get_cmap(self.colormap)(n_data)
         whites = np.ones(c_mapped.shape)
-        self.home.load_colorbar_and_info(func.get_color_bar(self.colormap, self.nc_data, (0.1, 0.1, 0.1), "white",
-                                                            self.home.font * 2.5), self.config[self.f_type])
+        self.home.load_colorbar_and_info(func.get_color_bar(self.colormap,
+                                                            self.nc_data,
+                                                            (0.1, 0.1, 0.1),
+                                                            "white",
+                                                            self.home.font * 2.5,
+                                                            d_min=self.vmin,
+                                                            d_max=self.vmax),
+                                         self.config[self.f_type])
         img = np.where(nans, whites, c_mapped)
         # Applies contrast settings
         pil_image = im.fromarray(np.uint8(img * 255))

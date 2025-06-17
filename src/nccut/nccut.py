@@ -45,7 +45,11 @@ class NcCut(App):
                                                 "circle_size": 5, "font_size": 14},
                           "netcdf": {"dimension_order": ["z", "y", "x"]},
                           "tool_defaults": {"orthogonal_width": 40},
-                          "metadata": {}}
+                          "metadata": {},
+                          "cbar_limits":{
+                              "vmin":None,
+                              "vmax":None}
+                          }
         config_dict = func.find_config(self.config_file)
         if config_dict:
             for k in config_dict.keys():
@@ -56,7 +60,7 @@ class NcCut(App):
         self.general_config["graphics_defaults"]["font_size"] = dp(self.general_config["graphics_defaults"]["font_size"])
         img_names = {"Blue": "blue_line_btn.png", "Green": "green_line_btn.png", "Orange": "orange_line_btn.png"}
         self.default_line_btn_img = img_names[self.general_config["graphics_defaults"]["line_color"]]
-        self.font_size = self.general_config["graphics_defaults"]["font_size"]
+        self.font_size = self.general_config["graphics_defaults"]["font_size"]        
 
     def on_start(self):
         """

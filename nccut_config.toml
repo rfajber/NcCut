@@ -6,7 +6,7 @@
 [graphics_defaults]
 contrast = 0 # The intitial contrast value to apply to displayed image, int between [-20, 20]
 line_color = "Blue" # Default color for tool graphics, one of "Blue", "Orange", or "Green"
-colormap = "viridis" # Default colormap for NetCDF data. Must be one of plt.colormaps()[:87]
+colormap = "plasma" # Default colormap for NetCDF data. Must be one of plt.colormaps()[:87]
 circle_size = 5 # Default tool graphics size, int between [2, 70]
 font_size = 14 # Font size for text elements, int between [8, 20]
 
@@ -21,3 +21,7 @@ dimension_order = ["z", "y", "x"]
 [metadata] # Specify additional global metadata key pairs here. Value must be a str
 # Example:
 batch_num = '1'
+
+[cbar_limits]
+vmin = 290.0
+vmax = 300.0
